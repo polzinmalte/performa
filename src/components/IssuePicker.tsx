@@ -111,7 +111,7 @@ export default function IssuePicker({
    */
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
-    let acted = false;
+    let acted: boolean;
     if (e.key === "ArrowDown") acted = moveSelection(1);
     else if (e.key === "ArrowUp") acted = moveSelection(-1);
     else if (e.key === "Enter") acted = openSelected();
