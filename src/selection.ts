@@ -240,7 +240,7 @@ export function useSelectionKeys(): void {
       if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
       if (typingIn(e.target) || overlayOpen()) return;
 
-      let acted = false;
+      let acted: boolean;
       if (e.key === "ArrowDown") acted = moveSelection(1);
       else if (e.key === "ArrowUp") acted = moveSelection(-1);
       else if (e.key === "Enter") {
