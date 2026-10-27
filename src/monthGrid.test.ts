@@ -55,6 +55,13 @@ describe("monthColumns", () => {
     expect(cols).not.toContain("2026-08-16"); // the Sunday stays out
   });
 
+  it("gives every day a column when the full week is on", () => {
+    const cols = monthColumns(START, END, [], true);
+    expect(cols).toHaveLength(31);
+    expect(cols.filter((c) => c.weekend)).toHaveLength(10);
+    expect(dates(cols)).toContain("2026-08-16");
+  });
+
   it("ignores a booked day outside the range", () => {
     expect(dates(monthColumns(START, END, ["2026-07-25"]))).not.toContain(
       "2026-07-25",

@@ -235,10 +235,12 @@
 .month-row > *:nth-child(2) {
   border-left: none;
 }
-/* Saturdays and Sundays only appear when something was booked on them, so the
-   tint is there to explain why the column exists at all. */
+/* Saturdays and Sundays are not expected to hold work — whether they appear
+   because something was booked on them or because the full week is on — so
+   they recede like the future does: sunken, with muted text. */
 .month-grid .wknd {
   background: var(--surface-sunken);
+  color: var(--muted);
 }
 /* Today's column, marked by tinting it rather than by ruling both its edges.
    This retired the last box-shadow in the file; nothing here floats. */

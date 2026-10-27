@@ -41,7 +41,8 @@ export interface MonthGrid {
 
 /**
  * The days the month gets a column for: every weekday, plus any weekend day
- * something was actually booked on.
+ * something was actually booked on — or every day, when the user asked for
+ * the full week.
  *
  * Saturdays and Sundays are left out by default because a month of them is
  * eight dead columns in a table that is already too wide — but leaving out a
@@ -52,11 +53,14 @@ export function monthColumns(
   start: string,
   end: string,
   booked: Iterable<string>,
+  showWeekends = false,
 ): MonthColumn[] {
   const bookedDates = new Set(booked);
   const now = today();
   return eachDate(start, end)
-    .filter((date) => !isWeekend(date) || bookedDates.has(date))
+    .filter(
+      (date) => showWeekends || !isWeekend(date) || bookedDates.has(date),
+    )
     .map((date) => ({
       date,
       weekend: isWeekend(date),
@@ -83,12 +87,14 @@ export function buildMonthGrid(
   start: string,
   end: string,
   rowOrder?: string[],
+  showWeekends = false,
 ): MonthGrid {
   const inRange = entries.filter((e) => e.date >= start && e.date <= end);
   const columns = monthColumns(
     start,
     end,
     inRange.filter((e) => isWeekend(e.date)).map((e) => e.date),
+    showWeekends,
   );
   // Only days that got a column count towards a total: a weekend booking is
   // always shown (it earned its column above), so nothing is silently dropped

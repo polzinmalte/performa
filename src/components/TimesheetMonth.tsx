@@ -27,6 +27,7 @@ import {
   setMonthSortBy,
   useMonthSortBy,
   useShowIssueTypeIcons,
+  useShowWeekends,
 } from "../settings";
 import {
   issueTypeName,
@@ -201,7 +202,8 @@ export default function TimesheetMonth({ site }: Props) {
   }, [filed, start, end, refreshChunk]);
 
   const calendar = useWorkCalendar();
-  const grid = buildMonthGrid(entries, start, end, rowOrder);
+  const showWeekends = useShowWeekends();
+  const grid = buildMonthGrid(entries, start, end, rowOrder, showWeekends);
   // The day a tooltip names is a property of the column, not of the cell, so it
   // is spelled out once per column and read by all thirty-odd rows under it. A
   // month-wide grid is a thousand cells and `toLocaleDateString` is not cheap:
