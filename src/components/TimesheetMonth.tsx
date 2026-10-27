@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -104,6 +104,11 @@ export default function TimesheetMonth({ site }: Props) {
   const [quickLog, setQuickLog] = useState<string | null>(null);
   /** The day being rebuilt, if one is. */
   const [rebuilding, setRebuilding] = useState<string | null>(null);
+  /** Issues put on the grid by hand, to book against with nothing booked yet.
+   *  Kept across months for as long as the view is open: an issue added to
+   *  fill in one month is likely the one to fill in the next. */
+  const [added, setAdded] = useState<IssueSummary[]>([]);
+  const [adding, setAdding] = useState(false);
 
   /** How the rows are ordered — remembered across launches, and read fresh
    *  (not from this closure) wherever a load just finished, so a sort change
@@ -203,7 +208,11 @@ export default function TimesheetMonth({ site }: Props) {
 
   const calendar = useWorkCalendar();
   const showWeekends = useShowWeekends();
-  const grid = buildMonthGrid(entries, start, end, rowOrder, showWeekends);
+  const grid = buildMonthGrid(entries, start, end, {
+    rowOrder,
+    showWeekends,
+    added,
+  });
   // The day a tooltip names is a property of the column, not of the cell, so it
   // is spelled out once per column and read by all thirty-odd rows under it. A
   // month-wide grid is a thousand cells and `toLocaleDateString` is not cheap:
@@ -259,7 +268,9 @@ export default function TimesheetMonth({ site }: Props) {
   function changeSort(next: MonthSortBy) {
     if (next === sortBy) return;
     setMonthSortBy(next);
-    setRowOrder(rowOrderOf(buildMonthGrid(entries, start, end), next, typeOf));
+    setRowOrder(
+      rowOrderOf(buildMonthGrid(entries, start, end, { added }), next, typeOf),
+    );
   }
 
   // The same pair of keys the week view uses — one verb, one key, whichever view
@@ -318,6 +329,15 @@ export default function TimesheetMonth({ site }: Props) {
             Total logged
           </button>
         </div>
+        <button
+          type="button"
+          className="secondary month-add"
+          title="Add an issue to the month, to book time on it"
+          onClick={() => setAdding(true)}
+        >
+          <Plus size={14} strokeWidth={2} aria-hidden />
+          Add issue
+        </button>
       </div>
 
       <div className="week-total">
@@ -446,6 +466,19 @@ export default function TimesheetMonth({ site }: Props) {
           worklogs={entries}
           onClose={() => setRebuilding(null)}
           onLogged={() => void refreshChunk(rebuilding)}
+        />
+      )}
+
+      {adding && (
+        <AddIssueModal
+          site={site}
+          onClose={() => setAdding(false)}
+          onSelect={(issue) => {
+            setAdding(false);
+            setAdded((prev) =>
+              prev.some((i) => i.key === issue.key) ? prev : [...prev, issue],
+            );
+          }}
         />
       )}
 
@@ -704,6 +737,33 @@ function QuickLogModal({
       <div className="modal wide">
         <h3>Log time · {formatDayLabel(date, DAY_FORMAT)}</h3>
         <IssuePicker site={site} onSelect={setIssue} />
+        <div className="row">
+          <button className="secondary" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Pick an issue to give a row of its own — typing its key, `DEV-123`, looks
+ *  it up directly. Nothing is booked yet; the row's cells do that. */
+function AddIssueModal({
+  site,
+  onClose,
+  onSelect,
+}: {
+  site: string;
+  onClose: () => void;
+  onSelect: (issue: IssueSummary) => void;
+}) {
+  const backdrop = useBackdropDismiss(onClose);
+  return (
+    <div className="modal-backdrop" {...backdrop}>
+      <div className="modal wide">
+        <h3>Add issue to the month</h3>
+        <IssuePicker site={site} onSelect={onSelect} offerPark={false} />
         <div className="row">
           <button className="secondary" onClick={onClose}>
             Cancel

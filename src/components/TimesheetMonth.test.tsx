@@ -374,6 +374,24 @@ describe("opening a cell", () => {
   });
 });
 
+describe("adding an issue by hand", () => {
+  it("gives the picked issue an empty row whose cells log against it", async () => {
+    renderMonth();
+    await loaded();
+
+    await userEvent.click(screen.getByRole("button", { name: /Add issue/ }));
+    await userEvent.click(screen.getByRole("button", { name: "pick ABC-9" }));
+
+    expect(screen.getByRole("button", { name: "ABC-9" })).toBeDefined();
+    expect(screen.getByText("A picked issue")).toBeDefined();
+
+    await userEvent.click(
+      screen.getAllByTitle(/nothing booked, click to log/)[0],
+    );
+    expect(screen.getByRole("heading", { name: /ABC-9 ·/ })).toBeDefined();
+  });
+});
+
 describe("opening an issue in the browser", () => {
   beforeEach(() =>
     serveWeeks([

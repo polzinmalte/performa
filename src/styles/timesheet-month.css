@@ -16,6 +16,11 @@
   margin-bottom: 8px;
   font-size: var(--fs-xs);
 }
+/* Off to the right of the sort, so it reads as an action on the grid rather
+   than a third way to order it. */
+.month-add {
+  margin-left: auto;
+}
 
 /* Twenty-odd day columns do not fit any window worth having, so the grid
    scrolls sideways inside the panel while the issue column and the day header

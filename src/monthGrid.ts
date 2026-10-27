@@ -1,4 +1,4 @@
-import { WorklogEntry } from "./api";
+import { IssueSummary, WorklogEntry } from "./api";
 import { eachDate, isWeekend, today } from "./time";
 import { DayInfo } from "./workdays";
 
@@ -58,9 +58,7 @@ export function monthColumns(
   const bookedDates = new Set(booked);
   const now = today();
   return eachDate(start, end)
-    .filter(
-      (date) => showWeekends || !isWeekend(date) || bookedDates.has(date),
-    )
+    .filter((date) => showWeekends || !isWeekend(date) || bookedDates.has(date))
     .map((date) => ({
       date,
       weekend: isWeekend(date),
@@ -81,13 +79,24 @@ export function monthColumns(
  *
  * Entries outside `start`–`end` are ignored, so a caller can pass whatever the
  * week-sized fetches came back with and let the month decide what belongs.
+ *
+ * `added` are issues the user put on the grid by hand to book against: each
+ * gets a row even with nothing booked yet, and one that already has time this
+ * month is simply the row it already had.
  */
 export function buildMonthGrid(
   entries: WorklogEntry[],
   start: string,
   end: string,
-  rowOrder?: string[],
-  showWeekends = false,
+  {
+    rowOrder,
+    showWeekends = false,
+    added = [],
+  }: {
+    rowOrder?: string[];
+    showWeekends?: boolean;
+    added?: IssueSummary[];
+  } = {},
 ): MonthGrid {
   const inRange = entries.filter((e) => e.date >= start && e.date <= end);
   const columns = monthColumns(
@@ -127,6 +136,16 @@ export function buildMonthGrid(
       (dayTotals.get(entry.date) ?? 0) + entry.timeSpentSeconds,
     );
     total += entry.timeSpentSeconds;
+  }
+
+  for (const issue of added) {
+    if (rows.has(issue.key)) continue;
+    rows.set(issue.key, {
+      issueKey: issue.key,
+      issueSummary: issue.summary,
+      cells: new Map(),
+      total: 0,
+    });
   }
 
   return {

@@ -170,7 +170,7 @@ describe("buildMonthGrid", () => {
       [log("ABC-1", "2026-08-03", 5), log("ABC-2", "2026-08-03", 40)],
       START,
       END,
-      order,
+      { rowOrder: order },
     );
     expect(after.rows.map((r) => r.issueKey)).toEqual(order);
   });
@@ -288,7 +288,7 @@ describe("buildMonthGrid", () => {
       [log("ABC-1", "2026-08-03", 1), log("NEW-1", "2026-08-03", 99)],
       START,
       END,
-      ["ABC-1", "GONE-1"],
+      { rowOrder: ["ABC-1", "GONE-1"] },
     );
     expect(grid.rows.map((r) => r.issueKey)).toEqual(["ABC-1", "NEW-1"]);
   });
@@ -304,13 +304,37 @@ describe("buildMonthGrid", () => {
       ],
       START,
       END,
-      ["ABC-1"],
+      { rowOrder: ["ABC-1"] },
     );
     expect(grid.rows.map((r) => r.issueKey)).toEqual([
       "NEW-2",
       "NEW-3",
       "NEW-1",
     ]);
+  });
+
+  describe("issues added by hand", () => {
+    const issue = (key: string) => ({ key, summary: `${key} summary` });
+
+    it("gets an empty row, after the booked ones", () => {
+      const grid = buildMonthGrid([log("ABC-1", "2026-08-03", 1)], START, END, {
+        added: [issue("DEV-7")],
+      });
+      expect(grid.rows.map((r) => r.issueKey)).toEqual(["ABC-1", "DEV-7"]);
+      const row = grid.rows[1];
+      expect(row.issueSummary).toBe("DEV-7 summary");
+      expect(row.cells.size).toBe(0);
+      expect(row.total).toBe(0);
+      expect(grid.total).toBe(1 * 3600);
+    });
+
+    it("is not doubled once time is booked on it", () => {
+      const grid = buildMonthGrid([log("DEV-7", "2026-08-03", 2)], START, END, {
+        added: [issue("DEV-7")],
+      });
+      expect(grid.rows).toHaveLength(1);
+      expect(grid.rows[0].total).toBe(2 * 3600);
+    });
   });
 
   it("still has its columns when nothing was booked at all", () => {
