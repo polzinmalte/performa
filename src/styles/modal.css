@@ -29,6 +29,15 @@
 .modal.wide {
   width: 35rem;
 }
+/* A logging form carries the issue's history under its fields, and that list
+   arrives a moment after the sheet does. Centred, the sheet would grow both
+   ways as it lands and move the fields out from under someone already typing
+   — so these sheets hang from the top and only ever grow downwards. */
+.modal-backdrop:has(> .modal > .issue-history) {
+  align-items: start;
+  padding-top: max(var(--sp-5), 10vh);
+  overflow-y: auto;
+}
 /* A modal opened from inside a modal (editing one of a cell's worklogs) has to
    sit above the one that opened it. */
 .modal .modal-backdrop {
