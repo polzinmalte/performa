@@ -30,11 +30,17 @@ vi.mock("./IssuePicker", () => ({
 }));
 
 import { apiMock, resetApiMock, worklogEntry } from "../test-support/api";
+import { formatDayLabel, monthLabel } from "../time";
 import { reportWorklogFiled } from "../worklogEvents";
 import TimesheetMonth from "./TimesheetMonth";
 
 // Mid-March 2026, so the month is fully in the past except its tail.
 const MID_MARCH = new Date(2026, 2, 18, 12, 0, 0);
+
+// Month and day names come out in the runner's locale, so the expected text is
+// spelled by the same helpers the view uses rather than written in English.
+const MARCH = monthLabel("2026-03-01");
+const FEBRUARY = monthLabel("2026-02-01");
 
 function renderMonth() {
   render(<TimesheetMonth site="https://example.atlassian.net" />);
@@ -93,7 +99,7 @@ describe("loading the month", () => {
     renderMonth();
 
     await loaded();
-    expect(screen.getByText(/March 2026/)).toBeDefined();
+    expect(screen.getByText(MARCH)).toBeDefined();
   });
 
   it("totals what came back across every chunk", async () => {
@@ -184,7 +190,7 @@ describe("moving between months", () => {
     await userEvent.click(screen.getByRole("button", { name: /Previous/ }));
 
     await waitFor(() => expect(apiMock.listWorklogs).toHaveBeenCalled());
-    expect(screen.getByText(/February 2026/)).toBeDefined();
+    expect(screen.getByText(FEBRUARY)).toBeDefined();
   });
 
   it("will not go into the future", async () => {
@@ -495,9 +501,12 @@ describe("rebuilding a day", () => {
     await loaded();
 
     const heads = [...document.querySelectorAll<HTMLElement>(".day-head-cell")];
-    const tenth = heads.find(
-      (h) => h.title.startsWith("Tue") && h.textContent?.includes("10"),
-    )!;
+    const tenthLabel = formatDayLabel("2026-03-10", {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    });
+    const tenth = heads.find((h) => h.title.startsWith(tenthLabel))!;
     const future = heads.find((h) => h.className.includes("future"))!;
     expect(future.querySelector("button")).toBeNull();
 
