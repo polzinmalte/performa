@@ -1,4 +1,4 @@
-import { WorklogEntry } from "./api";
+import { IssueSummary, WorklogEntry } from "./api";
 import { eachDate, isWeekend, today } from "./time";
 import { DayInfo } from "./workdays";
 
@@ -41,7 +41,8 @@ export interface MonthGrid {
 
 /**
  * The days the month gets a column for: every weekday, plus any weekend day
- * something was actually booked on.
+ * something was actually booked on — or every day, when the user asked for
+ * the full week.
  *
  * Saturdays and Sundays are left out by default because a month of them is
  * eight dead columns in a table that is already too wide — but leaving out a
@@ -52,11 +53,12 @@ export function monthColumns(
   start: string,
   end: string,
   booked: Iterable<string>,
+  showWeekends = false,
 ): MonthColumn[] {
   const bookedDates = new Set(booked);
   const now = today();
   return eachDate(start, end)
-    .filter((date) => !isWeekend(date) || bookedDates.has(date))
+    .filter((date) => showWeekends || !isWeekend(date) || bookedDates.has(date))
     .map((date) => ({
       date,
       weekend: isWeekend(date),
@@ -77,18 +79,31 @@ export function monthColumns(
  *
  * Entries outside `start`–`end` are ignored, so a caller can pass whatever the
  * week-sized fetches came back with and let the month decide what belongs.
+ *
+ * `added` are issues the user put on the grid by hand to book against: each
+ * gets a row even with nothing booked yet, and one that already has time this
+ * month is simply the row it already had.
  */
 export function buildMonthGrid(
   entries: WorklogEntry[],
   start: string,
   end: string,
-  rowOrder?: string[],
+  {
+    rowOrder,
+    showWeekends = false,
+    added = [],
+  }: {
+    rowOrder?: string[];
+    showWeekends?: boolean;
+    added?: IssueSummary[];
+  } = {},
 ): MonthGrid {
   const inRange = entries.filter((e) => e.date >= start && e.date <= end);
   const columns = monthColumns(
     start,
     end,
     inRange.filter((e) => isWeekend(e.date)).map((e) => e.date),
+    showWeekends,
   );
   // Only days that got a column count towards a total: a weekend booking is
   // always shown (it earned its column above), so nothing is silently dropped
@@ -121,6 +136,16 @@ export function buildMonthGrid(
       (dayTotals.get(entry.date) ?? 0) + entry.timeSpentSeconds,
     );
     total += entry.timeSpentSeconds;
+  }
+
+  for (const issue of added) {
+    if (rows.has(issue.key)) continue;
+    rows.set(issue.key, {
+      issueKey: issue.key,
+      issueSummary: issue.summary,
+      cells: new Map(),
+      total: 0,
+    });
   }
 
   return {

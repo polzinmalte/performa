@@ -16,6 +16,11 @@
   margin-bottom: 8px;
   font-size: var(--fs-xs);
 }
+/* Off to the right of the sort, so it reads as an action on the grid rather
+   than a third way to order it. */
+.month-add {
+  margin-left: auto;
+}
 
 /* Twenty-odd day columns do not fit any window worth having, so the grid
    scrolls sideways inside the panel while the issue column and the day header
@@ -235,10 +240,12 @@
 .month-row > *:nth-child(2) {
   border-left: none;
 }
-/* Saturdays and Sundays only appear when something was booked on them, so the
-   tint is there to explain why the column exists at all. */
+/* Saturdays and Sundays are not expected to hold work — whether they appear
+   because something was booked on them or because the full week is on — so
+   they recede like the future does: sunken, with muted text. */
 .month-grid .wknd {
   background: var(--surface-sunken);
+  color: var(--muted);
 }
 /* Today's column, marked by tinting it rather than by ruling both its edges.
    This retired the last box-shadow in the file; nothing here floats. */
